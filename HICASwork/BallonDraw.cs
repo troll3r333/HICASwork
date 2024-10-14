@@ -1,10 +1,9 @@
 ﻿using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
+using Autodesk.AutoCAD.Geometry;
+using Autodesk.AutoCAD.Runtime;
 using System;
-using System.Security.Cryptography;
 using System.Collections.Generic;
 
 namespace HICASwork
@@ -66,6 +65,8 @@ namespace HICASwork
                 tr.Commit();
             }
         }
+        private static int colorIndex = 1; // Khởi tạo chỉ số màu (biến tĩnh)
+
         [CommandMethod("DoiMauBalloon")]
         public void MauBalloon()
         {
@@ -77,53 +78,23 @@ namespace HICASwork
                 BlockTable bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
                 BlockTableRecord btr = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
 
-                int colorIndex = 1; // Khởi tạo chỉ số màu
-
                 foreach (ObjectId objId in btr)
                 {
                     Entity ent = tr.GetObject(objId, OpenMode.ForWrite) as Entity;
 
-                    // Kiểm tra xem ent có phải là Line hay không
-                    if (ent is Line)
+                    // Kiểm tra và gán màu cho các loại đối tượng
+                    if (ent is Line || ent is Circle || ent is DBText)
                     {
-                        // Gán màu cho đường thẳng
                         ent.ColorIndex = colorIndex;
-                        colorIndex++; // Tăng chỉ số màu cho đối tượng tiếp theo
-                                      // Đảm bảo chỉ số màu không vượt quá 255
-                        if (colorIndex > 255)
-                        {
-                            colorIndex = 1; // Quay lại chỉ số màu bắt đầu
-                        }
+                        colorIndex = (colorIndex % 255) + 1; // Tăng chỉ số màu và quay lại 1 nếu vượt quá 255
                     }
-                    if (ent is Circle)
-                    {
-                        // Gán màu cho đường thẳng
-                        ent.ColorIndex = colorIndex;
-                        colorIndex++; // Tăng chỉ số màu cho đối tượng tiếp theo
-                                      // Đảm bảo chỉ số màu không vượt quá 255
-                        if (colorIndex > 255)
-                        {
-                            colorIndex = 1; // Quay lại chỉ số màu bắt đầu
-                        }
-                    }
-                    if (ent is DBText)
-                    {
-                        // Gán màu cho đường thẳng
-                        ent.ColorIndex = colorIndex;
-                        colorIndex++; // Tăng chỉ số màu cho đối tượng tiếp theo
-                                      // Đảm bảo chỉ số màu không vượt quá 255
-                        if (colorIndex > 255)
-                        {
-                            colorIndex = 1; // Quay lại chỉ số màu bắt đầu
-                        }
-                    }
-
                 }
 
                 tr.Commit();
             }
-
         }
+        private static int linetypeIndex = 0; // Khởi tạo chỉ số kiểu đường nét (biến tĩnh)
+
         [CommandMethod("DuongnetBalloon")]
         public static void DuongnetBalloon()
         {
@@ -136,38 +107,27 @@ namespace HICASwork
                 BlockTable bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
                 BlockTableRecord btr = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
 
+                // Danh sách các kiểu đường nét sử dụng để thay đổi luân phiên
+                string[] linetypes = { "Continuous", "Dashed", "Hidden", "Center" };
+
                 // Tải kiểu đường nét nếu cần thiết
-                LoadLinetypeIfNeeded(db, "Hidden");
-                LoadLinetypeIfNeeded(db, "Continuous");
-                LoadLinetypeIfNeeded(db, "Dashed");
-                LoadLinetypeIfNeeded(db, "Center");
+                foreach (string linetype in linetypes)
+                {
+                    LoadLinetypeIfNeeded(db, linetype);
+                }
 
                 foreach (ObjectId objId in btr)
                 {
                     Entity ent = tr.GetObject(objId, OpenMode.ForWrite) as Entity;
-                    if (ent is Line)
-                    {
-                        // Chuyển đổi kiểu đường nét theo chu kỳ cho Line
-                        if (ent.Linetype == "Hidden")
-                            ent.Linetype = "Continuous";
-                        else if (ent.Linetype == "Continuous")
-                            ent.Linetype = "Dashed";
-                        else
-                            ent.Linetype = "Hidden";
 
-                        ed.WriteMessage($"\nĐã thay đổi kiểu đường nét cho Line ID {objId} thành {ent.Linetype}.");
-                    }
-                    if (ent is Circle)
+                    if (ent is Line || ent is Circle)
                     {
-                        // Chuyển đổi kiểu đường nét theo chu kỳ cho Circle
-                        if (ent.Linetype == "Center")
-                            ent.Linetype = "Continuous";
-                        else if (ent.Linetype == "Continuous")
-                            ent.Linetype = "Dashed";
-                        else
-                            ent.Linetype = "Center";
+                        // Chuyển đổi kiểu đường nét theo chu kỳ dựa vào linetypeIndex
+                        ent.Linetype = linetypes[linetypeIndex];
+                        ed.WriteMessage($"\nĐã thay đổi kiểu đường nét cho {ent.GetType().Name} ID {objId} thành {ent.Linetype}.");
 
-                        ed.WriteMessage($"\nĐã thay đổi kiểu đường nét cho Circle ID {objId} thành {ent.Linetype}.");
+                        // Tăng chỉ số kiểu đường nét và quay lại 0 nếu vượt quá số kiểu có sẵn
+                        linetypeIndex = (linetypeIndex + 1) % linetypes.Length;
                     }
                 }
 
@@ -178,6 +138,7 @@ namespace HICASwork
             doc.Editor.Regen();
         }
 
+        // Hàm hỗ trợ để tải kiểu đường nét nếu cần
         private static void LoadLinetypeIfNeeded(Database db, string linetypeName)
         {
             using (Transaction tr = db.TransactionManager.StartTransaction())
@@ -194,9 +155,8 @@ namespace HICASwork
             }
         }
 
-
         [CommandMethod("TaonhomBalloon")]
-        public void GroupBalloon()
+        public void TaonhomBalloon()
         {
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Database db = doc.Database;
@@ -275,7 +235,7 @@ namespace HICASwork
             }
         }
         [CommandMethod("Kegocvuong")]
-        public void Rotate90()
+        public void Kegocvuong()
         {
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Database db = doc.Database;
@@ -393,7 +353,7 @@ namespace HICASwork
 }
 
 
-
+    
 
 
 
