@@ -282,55 +282,8 @@ namespace HICASwork
             }
         }
         
-        [CommandMethod("XaotrepBallon")]
-        public void XaotrepBallon()
-        {
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-            Database db = doc.Database;
-
-            using (Transaction tr = db.TransactionManager.StartTransaction())
-            {
-                BlockTable bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
-                BlockTableRecord btr = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
-
-                // Vector di chuyển các balloon lên trên 30 đơn vị 
-                Vector3d displacement = new Vector3d(0, 30, 0);
-
-                // Danh sách lưu trữ các bản sao mới
-                List<Entity> newEntities = new List<Entity>();
-
-                foreach (ObjectId objId in btr)
-                {
-                    Entity ent = tr.GetObject(objId, OpenMode.ForRead) as Entity;
-
-                    if (ent != null)
-                    {
-                        // Tạo một bản sao của đối tượng
-                        Entity copiedEnt = ent.Clone() as Entity;
-                       
-                        if (copiedEnt != null)
-                        {
-                            // Di chuyển bản sao bằng vector displacement
-                            copiedEnt.TransformBy(Matrix3d.Displacement(displacement));
-
-                            // Thêm bản sao vào danh sách
-                            newEntities.Add(copiedEnt);
-                        }
-                    }
-                }
-
-                // Sau khi đã hoàn tất việc clone  thêm tất cả các đối tượng mới vào không gian mô hình
-                foreach (Entity newEnt in newEntities)
-                {
-                    btr.AppendEntity(newEnt);
-                    tr.AddNewlyCreatedDBObject(newEnt, true);
-                }
-
-                tr.Commit();
-            }
-        }
-        [CommandMethod("XaotrepBallonTest")]
-        public void XaotrepBallonTest()
+        [CommandMethod("SaochepBallon")]
+        public void SaochepBallon()
         {
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Database db = doc.Database;
