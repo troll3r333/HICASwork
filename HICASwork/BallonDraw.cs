@@ -281,49 +281,64 @@ namespace HICASwork
                 tr.Commit();
             }
         }
-        
         [CommandMethod("SaochepBallon")]
         public void SaochepBallon()
         {
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Database db = doc.Database;
-
             using (Transaction tr = db.TransactionManager.StartTransaction())
             {
+
                 BlockTable bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
                 BlockTableRecord btr = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
-
-                // Danh sách lưu trữ các bản sao mới
                 List<Entity> newEntities = new List<Entity>();
-                // Lặp lại để sao chép các balloon
+                double lineLength = 0;
+
                 foreach (ObjectId objId in btr)
                 {
                     Entity ent = tr.GetObject(objId, OpenMode.ForRead) as Entity;
-
-                    // Kiểm tra xem đối tượng có phải là balloon không
-                    if (ent != null)
+                    // Tìm dòng đầu tiên (line) để lấy chiều dài
+                    if (ent is Line line) 
                     {
-                        // Tạo một bản sao của đối tượng
-                        Entity copiedEnt = ent.Clone() as Entity;
+                        lineLength = line.Length; 
+                        break; 
+                    }
+                }
 
-                        if (copiedEnt != null  )
+                // Tính toán khoảng cách di chuyển
+                double displacementAmount = lineLength * 3;
+                foreach (ObjectId objId in btr)
+                {
+                    Entity ent = tr.GetObject(objId, OpenMode.ForRead) as Entity;
+                   
+                    if (ent != null) 
+                    {
+                      
+                        Entity copiedEnt = ent.Clone() as Entity;
+                        if (copiedEnt != null)
                         {
-                            // Lấy vị trí hiện tại của balloon
-                            Extents3d extents = ent.GeometricExtents;
-                            Point3d currentPosition = extents.MinPoint;
-                            // Tính toán vị trí mới
-                            Point3d newPosition= currentPosition;
-                            if (currentPosition.X > 0)
-                            {
-                                newPosition = new Point3d(currentPosition.X , currentPosition.Y + 30, currentPosition.Z);
-                            }
-                            else
-                            {
-                                newPosition = new Point3d(currentPosition.X + 30, currentPosition.Y , currentPosition.Z);
-                            }
-                            copiedEnt.TransformBy(Matrix3d.Displacement(newPosition - currentPosition));
-                            // Thêm bản sao vào danh sách
-                            newEntities.Add(copiedEnt);
+                                // Lấy vùng mở rộng của đối tượng
+                                Extents3d extents = ent.GeometricExtents;
+                                // Lấy điểm Min và Max của đối tượng
+                                Point3d minPoint = extents.MinPoint;
+                                Point3d maxPoint = extents.MaxPoint;
+                                // Tính toán vị trí hiện tại
+                                Point3d currentPosition = minPoint;
+                                // Tính toán vị trí mới cho đối tượng sao chép
+                                Point3d newPosition = currentPosition; 
+                                if (maxPoint.X > 0)
+                                {
+                                    newPosition = new Point3d(minPoint.X, minPoint.Y + 30, minPoint.Z);
+                                }
+                                else
+                                {
+                                    newPosition = new Point3d(minPoint.X + 30, minPoint.Y, minPoint.Z);
+                                }
+                                // Di chuyển đối tượng đến vị trí mới bằng phép biến đổi
+                                copiedEnt.TransformBy(Matrix3d.Displacement(newPosition - minPoint));
+                                // Thêm bản sao vào danh sách
+                                newEntities.Add(copiedEnt);
+                            
                         }
                     }
                 }
@@ -334,11 +349,9 @@ namespace HICASwork
                     btr.AppendEntity(newEnt);
                     tr.AddNewlyCreatedDBObject(newEnt, true);
                 }
-
                 tr.Commit();
             }
         }
-
         [CommandMethod("XoaBalloon")]
         public void XoaBalloon()
         {
