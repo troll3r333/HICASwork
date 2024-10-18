@@ -352,6 +352,7 @@ namespace HICASwork
                 tr.Commit();
             }
         }
+
         [CommandMethod("XoaBalloon")]
         public void XoaBalloon()
         {
