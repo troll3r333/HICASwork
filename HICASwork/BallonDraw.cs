@@ -295,48 +295,33 @@ namespace HICASwork
 
                 // Danh sách lưu trữ các bản sao mới
                 List<Entity> newEntities = new List<Entity>();
-
-                // Lưu trữ chiều dài của line trên cùng
-                double topLineLength = 0;
-
-                // Tìm chiều dài của line trên cùng
-                foreach (ObjectId objId in btr)
-                {
-                    Entity ent = tr.GetObject(objId, OpenMode.ForRead) as Entity;
-
-                    // Tìm dòng đầu tiên (trong trường hợp bạn có nhiều dòng)
-                    if (ent is Line line)
-                    {
-                        topLineLength = line.Length; // Lưu chiều dài
-                        break; // Dừng lại sau khi tìm thấy dòng đầu tiên
-                    }
-                }
-
-                // Tính toán khoảng cách di chuyển là 3 lần chiều dài của line
-                double displacementAmount = topLineLength * 3;
-
                 // Lặp lại để sao chép các balloon
                 foreach (ObjectId objId in btr)
                 {
                     Entity ent = tr.GetObject(objId, OpenMode.ForRead) as Entity;
 
                     // Kiểm tra xem đối tượng có phải là balloon không
-                    if (ent != null) // Có thể điều chỉnh loại balloon tại đây
+                    if (ent != null)
                     {
                         // Tạo một bản sao của đối tượng
                         Entity copiedEnt = ent.Clone() as Entity;
 
-                        if (copiedEnt != null)
+                        if (copiedEnt != null  )
                         {
                             // Lấy vị trí hiện tại của balloon
                             Extents3d extents = ent.GeometricExtents;
                             Point3d currentPosition = extents.MinPoint;
-
                             // Tính toán vị trí mới
-                            Point3d newPosition = new Point3d(currentPosition.X + displacementAmount, currentPosition.Y + displacementAmount, currentPosition.Z);
-                            // Di chuyển bản sao đến vị trí mới
+                            Point3d newPosition= currentPosition;
+                            if (currentPosition.X > 0)
+                            {
+                                newPosition = new Point3d(currentPosition.X , currentPosition.Y + 30, currentPosition.Z);
+                            }
+                            else
+                            {
+                                newPosition = new Point3d(currentPosition.X + 30, currentPosition.Y , currentPosition.Z);
+                            }
                             copiedEnt.TransformBy(Matrix3d.Displacement(newPosition - currentPosition));
-
                             // Thêm bản sao vào danh sách
                             newEntities.Add(copiedEnt);
                         }
