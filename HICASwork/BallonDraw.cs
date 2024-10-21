@@ -317,6 +317,7 @@ namespace HICASwork
                         Entity copiedEnt = ent.Clone() as Entity;
                         if (copiedEnt != null)
                         {
+                           
                                 // Lấy vùng mở rộng của đối tượng
                                 Extents3d extents = ent.GeometricExtents;
                                 // Lấy điểm Min và Max của đối tượng
@@ -325,12 +326,12 @@ namespace HICASwork
                                 // Tính toán vị trí hiện tại
                                 Point3d currentPosition = minPoint;
                                 // Tính toán vị trí mới cho đối tượng sao chép
-                                Point3d newPosition = currentPosition; 
+                                Point3d newPosition = currentPosition;
                                 if (maxPoint.X > 0)
                                 {
                                     newPosition = new Point3d(minPoint.X, minPoint.Y + 30, minPoint.Z);
                                 }
-                                else
+                                if (minPoint.X < 0)
                                 {
                                     newPosition = new Point3d(minPoint.X + 30, minPoint.Y, minPoint.Z);
                                 }
