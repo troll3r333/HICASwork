@@ -325,23 +325,23 @@ namespace HICASwork
                                 Point3d maxPoint = extents.MaxPoint;
                                 // Tính toán vị trí hiện tại
                                 Point3d currentPosition = minPoint;
-                                // Tính toán vị trí mới cho đối tượng sao chép
-                                Point3d newPosition = currentPosition;
-                                if (maxPoint.X > 0)
-                                {
-                                    newPosition = new Point3d(minPoint.X, minPoint.Y + 30, minPoint.Z);
-                                }
-                                if (minPoint.X < 0)
-                                {
-                                    newPosition = new Point3d(minPoint.X + 30, minPoint.Y, minPoint.Z);
-                                }
-                                // Di chuyển đối tượng đến vị trí mới bằng phép biến đổi
-                                copiedEnt.TransformBy(Matrix3d.Displacement(newPosition - minPoint));
+                                    // Tính toán vị trí mới cho đối tượng sao chép
+                                    Point3d newPosition = currentPosition;
+                            if (maxPoint.X > 0)
+                            {
+                                newPosition = new Point3d(minPoint.X, minPoint.Y + lineLength, minPoint.Z);
+                            }
+                            if (minPoint.X < 0)
+                            {
+                                newPosition = new Point3d(minPoint.X + lineLength, minPoint.Y, minPoint.Z);
+                            }
+                            // Di chuyển đối tượng đến vị trí mới bằng phép biến đổi
+                            copiedEnt.TransformBy(Matrix3d.Displacement(newPosition - currentPosition));
                                 // Thêm bản sao vào danh sách
                                 newEntities.Add(copiedEnt);
                             
                         }
-                    }
+                    }   
                 }
 
                 // Sau khi đã hoàn tất việc sao chép và di chuyển, thêm tất cả các đối tượng mới vào không gian mô hình
